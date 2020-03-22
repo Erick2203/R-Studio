@@ -1,0 +1,310 @@
+This R-code is to compare the most frequent tokens that each of the articles 
+that we have defined in the carpets depending on the league that we want to observe, 
+this code allows us to visualize which are the main words that stand out in each of 
+the leagues as well as an analysis of the words that have the most meaning for each 
+one of the leagues in order to express what for each league it is important that it 
+is demonstrated throughout the world and how there are different perspectives even if it is the same sport.
+
+### This frameworks allows to see the most frequent words in different graphics so the interpretation 
+changes due to what you define in the codes and in the most important words for the reader. ###
+
+###################################################
+# Call the different libraries that we need in R-Studio (Check if you don´t need to install)
+###################################################
+
+library(pdftools) 
+library(textreadr)
+library(dplyr)
+library(tidyverse)
+library(stringr)
+library(tidytext)
+library(ggplot2)
+library(tidyr)
+library(wordcloud)
+library(reshape2)
+
+###################################################
+# Setting the Bundesliga data frame
+###################################################
+
+setwd("C:/Us ### this is the path to set the working directory ###
+
+bundesliga <- list.files(path="C:/Use ### Select the path were you have the carpet with different pdf articles for the bundesliga ###
+  ### This code gives you the value of all the pdf that you have in the carpet in the global environment like chr [1:5] ###
+
+bundesliga_text <- do.call(rbind, lapply(bundesliga, function(x) paste(read_document(file=x), collapse = " ")))
+  ### This code helps you that for each pdf that you have read all the text ###
+
+mydf_bundesliga <- data_frame(line= 1:5, text=bundesliga_text)
+  ### This code make you a data frame with the 5 obs and 2 variables so you can start doing different frameworks in R to analyze. ###
+  
+  ### You need to repeat this for each carpet that you have of different soccer leagues ###
+  
+###################################################
+# Setting the MLS data frame
+###################################################
+
+setwd("C:/Us
+MLS <- list.files(path="C:/Us
+MLS_text <- do.call(rbind, lapply(MLS, function(x) paste(read_document(file=x), collapse = " ")))
+mydf_MLS <- data_frame(line=1:5, text=MLS_text)
+
+###################################################
+# Setting the Premier League data frame
+###################################################
+
+setwd("C:/Us
+premier <- list.files(path="C:/Us
+premier_text <- do.call(rbind, lapply(premier, function(x) paste(read_document(file=x), collapse = " ")))
+mydf_premier <- data_frame(line=1:7, text=premier_text)
+
+
+################################################### 
+# Call all the stop words and the junk list
+###################################################
+data(stop_words)
+
+my_junk <- data_frame(
+  word = c("m", "www", "i", "th", "d","a","b","c", "n", "l", "e","bundesliga",
+           "MLS", "mls", "premier", "league", "german", "europe", "USA",
+           "comparison", "1", "0", "50", "2", "4", "19", "5", "3",
+           "european", "sports", "teams", "players", "2015", " football",
+           "ffp", "top", "del", "034", "09", "2201", "2,201", "de",
+           "samost", "nbc", "attper", "variable", "failures", "54.1m", "1890",
+           "flipfactory", "it's", "el", "telestream", "deporte","era",
+           "1967", "tier", "penn", "1915", "2017", "utd", "osborne"),
+  lexicon = "junk"
+)
+
+  ### The purpose of these codes is so that when you start doing the analysis for each framework you don't 
+  consider these words which are the connections between words like the, that. ###
+  
+  ### Also the list that you define like a data frame my_junk the purpose is that those words are not considered
+  in the frameworks when you do the untoken so that you can consider what are really the most meaningful words 
+  in the articles, keep in mind that this list you have to create it because you define what the words are that 
+  are in the texts that do not have to be considered in the analysis ###
+
+### In this part I´m going to show different examples of frameworks that helps you with the comparison of valuables 
+words for the different soccer leagues, that way you can start Analyze each one and give a couple of insights on how 
+you see the behavior on different soccer leagues. ###
+
+########################################
+# Histograms of the frequency of the most important words
+########################################
+
+######## Bundesliga ###############################
+
+freq_hist_bundesliga <- mydf_bundesliga %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE) %>%
+  filter(n > 75) %>% # we need this to eliminate all the low count words
+  ggplot(aes(word, n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()
+
+print(freq_hist_bundesliga)
+
+######## MLS ###############################
+
+freq_hist_MLS <- mydf_MLS %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE) %>%
+  filter(n > 100) %>% # we need this to eliminate all the low count words
+  ggplot(aes(word, n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()
+
+print(freq_hist_MLS)
+
+######## Premier ###############################
+
+freq_hist_premier <- mydf_premier %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE) %>%
+  filter(n > 100) %>% # we need this to eliminate all the low count words
+  ggplot(aes(word, n))+
+  geom_col()+
+  xlab(NULL)+
+  coord_flip()
+
+print(freq_hist_premier)
+
+  ### With this framework you can see in a Histogram what are the most frequent word on each league, you can start analyze 
+  how is the behavior on each league, you can define what could be the most important for them also you can look that
+  could be different words that have more importance. ###
+  
+  ### A big help is that not always you can focus on the top 2 most frequent words because that could repeat in the other leagues,
+  maybe you need to focus on word 3 to 6 that can define better and give more words that are important for different leagues.
+  
+
+###################################################
+# Tokenize my data frame and group by to have better
+# definition of the most value words with WORD CLOUD
+###################################################
+
+######## Bundesliga ###############################
+
+tidy_bundesliga <- mydf_bundesliga %>%
+  group_by(line) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE)
+
+######## MLS ###############################
+
+tidy_MLS <- mydf_MLS %>%
+  group_by(line) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE)
+
+######## Premier ###############################
+
+tidy_premier <- mydf_premier %>%
+  group_by(line) %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(word, sort=TRUE)
+
+###################################################
+# Define word cloud for each data frame.
+###################################################
+
+tidy_bundesliga %>%
+  with(wordcloud(word, n, max.words = 10))
+
+tidy_MLS %>%
+  with(wordcloud(word, n, max.words = 15))
+
+tidy_premier %>%
+  with(wordcloud(word, n, max.words = 10))
+  
+  
+  ### This framework allows you to have a different graphic of the most frequent words in our articles,
+  this allows you to see how the most important words are of a larger size and a stronger color depending
+  on the times they are repeated in the texts. ###
+  
+###################################################
+# Define data frame for tf_idf (term frequency–inverse document frequency)
+###################################################
+
+######## Bundesliga ###############################
+
+tf_bundesliga <- mydf_bundesliga %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(line, word, sort=TRUE)
+
+idf_bundesliga <- tf_bundesliga %>%
+  group_by(line) %>%
+  summarize(total=sum(n))
+
+tf_idf_bundesliga_g <- left_join(tf_bundesliga, idf_bundesliga)
+
+tf_idf_bundesliga <- tf_idf_bundesliga_g %>%
+  bind_tf_idf(word, line, n) %>%
+  arrange(desc(tf_idf))
+
+######## MLS ###############################
+
+tf_MLS <- mydf_MLS %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(line, word, sort=TRUE)
+
+idf_MLS <- tf_MLS %>%
+  group_by(line) %>%
+  summarize(total=sum(n))
+
+tf_idf_MLS_g <- left_join(tf_MLS, idf_MLS)
+
+tf_idf_MLS <- tf_idf_MLS_g %>%
+  bind_tf_idf(word, line, n) %>%
+  arrange(desc(tf_idf))
+
+######## premier ###############################
+
+tf_premier <- mydf_premier %>%
+  unnest_tokens(word, text) %>%
+  anti_join(stop_words) %>%
+  anti_join(my_junk) %>%
+  count(line, word, sort=TRUE)
+
+idf_premier <- tf_premier %>%
+  group_by(line) %>%
+  summarize(total=sum(n))
+
+tf_idf_premier_g <- left_join(tf_premier, idf_premier)
+
+tf_idf_premier <- tf_idf_premier_g %>%
+  bind_tf_idf(word, line, n) %>%
+  arrange(desc(tf_idf))
+
+###################################################
+# looking at the graphical apprach of tf_idf.
+###################################################
+
+######## Bundesliga ###############################
+
+tf_idf_bundesliga %>%
+  mutate(word=factor(word, levels=rev(unique(word)))) %>%
+  group_by(line) %>%
+  top_n(5) %>%
+  ungroup %>%
+  ggplot(aes(word, tf_idf, fill=line))+
+  geom_col(show.legend=FALSE)+
+  labs(x=NULL, y="tf-idf")+
+  facet_wrap(~line, ncol=2, scales="free")+
+  coord_flip()
+
+######## MLS ###############################
+
+tf_idf_MLS %>%
+  mutate(word=factor(word, levels=rev(unique(word)))) %>%
+  group_by(line) %>%
+  top_n(5) %>%
+  ungroup %>%
+  ggplot(aes(word, tf_idf, fill=line))+
+  geom_col(show.legend=FALSE)+
+  labs(x=NULL, y="tf-idf")+
+  facet_wrap(~line, ncol=2, scales="free")+
+  coord_flip()
+
+######## premier ###############################
+
+tf_idf_premier %>%
+  mutate(word=factor(word, levels=rev(unique(word)))) %>%
+  group_by(line) %>%
+  top_n(5) %>%
+  ungroup %>%
+  ggplot(aes(word, tf_idf, fill=line))+
+  geom_col(show.legend=FALSE)+
+  labs(x=NULL, y="tf-idf")+
+  facet_wrap(~line, ncol=2, scales="free")+
+  coord_flip()
+
+  ### This framework allow us to see for each article we have per league what are the most frequent words in the texts, 
+  that perspective can help you to be able to separate different opinions of the articles, so take into account that 
+  even though they are from the same league, they may have different opinions of what may be more important or what stands
+  out for each article, since the topics of the articles. ###
+  
+### Using this 3 frameworks in R-Studio they can give you a wide range of important words for each league, so you could 
+already start analyzing separately or be able to put together each of the strengths of each framework to be able to give 
+insights with more support. ###
+
+
+### Thank you very much for taking the time to see the code. I hope it has helped you to understand a little more about 
+how you could do an analysis of different soccer leagues with text analytics in R-Studio. ###
